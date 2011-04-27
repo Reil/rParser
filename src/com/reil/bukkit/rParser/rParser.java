@@ -5,19 +5,27 @@ import org.bukkit.ChatColor;
 
 
 public class rParser {
-	protected static final int lineLength = 312; 
+	protected static final int lineLength = 312;
 	
 	public static String parseMessage(String message, String [] replace, String[] with){
+		String parsed = replaceWords(message, replace, with);
+		StringBuilder output = new StringBuilder();
+		ArrayList<String> outputArray = new ArrayList<String>();
+		for (String toParse : parsed.split("\n")) {
+			for(String add : wordWrap(toParse))
+				outputArray.add(add);
+		}
+		for(String addMe : outputArray){
+			output.append(lastColor(output.toString()) + addMe + "\n");
+		}
+		return output.toString();
+	}
+	public static String replaceWords(String message, String [] replace, String[] with){
 		String parsed = message;
 		for(int i = 0; i < replace.length; i++) {
 			parsed = parsed.replaceAll(replace[i], with[i]);
 		}
-		String parsed2 = new String();
-		StringBuilder output = new StringBuilder();
-		for (String toParse : parsed.split("\n")) {
-			output.append(lastColor(parsed2) + combineSplit(0, wordWrap(toParse), "\n") + "\n");
-		}
-		return output.toString();
+		return parsed;
 	}
 	/*
 	 * Finds the last color sequence used in the string
@@ -33,11 +41,13 @@ public class rParser {
 	 * 
 	 */
 	public static String combineSplit(int beginHere, String [] split, String seperator){
-		String combined = new String(split[beginHere]);
-		for (int i = beginHere + 1; i < split.length; i++){
-			combined = combined + seperator + split[i];
+		StringBuilder combined = new StringBuilder(split[beginHere]);
+		if(beginHere + 1 < split.length){
+			for (int i = beginHere + 1; i < split.length; i++){
+				combined.append(seperator + split[i]);
+			}
 		}
-		return combined;
+		return combined.toString();
 	}
 	
 	
@@ -86,9 +96,14 @@ public class rParser {
     				words.add(split.remove(0));
     		}
     		//Merge them and add them to the output array.
-    		out.add( combineSplit(0,
-    				words.toArray(new String[words.size()]), " ") + " " );
+    		String lastColor = "";
+    		if (!out.isEmpty()){
+    			 lastColor = lastColor(out.get(out.size() - 1));
+    		}
+    		out.add(lastColor + 
+    				combineSplit(0,	words.toArray(new String[words.size()]), " ") + " " );
     	}
+    	
     	//Convert to an array and return
     	return out.toArray(new String[out.size()]);
     }
@@ -107,10 +122,12 @@ public class rParser {
 		{
 			if(str.charAt(x) == '§' /*|| str.charAt(x) == ChatColor.White.charAt(0)*/)
 			{
-				if(colorChange(str.charAt(x + 1)) != null)
-				{
-					x++;
-					continue;
+				if (x+1 != str.length()) {
+					if(colorChange(str.charAt(x + 1)) != null)
+					{
+						x++;
+						continue;
+					}
 				}
 			}
 			int len = charLength(str.charAt(x));
